@@ -3,16 +3,16 @@
 import { motion, useScroll, useTransform, useInView } from 'framer-motion';
 import { useRef, useState, useEffect } from 'react';
 import { Mail, Phone, MapPin, Instagram, Facebook, Youtube, Sparkles, TrendingUp, Heart, Zap, Users, Award, Palette, Target, Lightbulb, ArrowRight } from 'lucide-react';
-import Lenis from 'lenis';
 
 export default function Home() {
-  const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 });
-  const [cursorTrail, setCursorTrail] = useState<Array<{ x: number; y: number; id: number }>>([]);
-  const [isHovering, setIsHovering] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [scrollProgress, setScrollProgress] = useState(0);
   const { scrollYProgress } = useScroll();
+  
+  // Back to top button animations
+  const buttonOpacity = useTransform(scrollYProgress, [0, 0.1], [0, 1]);
+  const buttonScale = useTransform(scrollYProgress, [0, 0.1], [0, 1]);
 
   useEffect(() => {
     // Update scroll progress state
@@ -44,56 +44,8 @@ export default function Home() {
       });
     }, 150); // Increased from 100 to 150ms
 
-    // Initialize Lenis smooth scrolling
-    const lenis = new Lenis({
-      duration: 1.2,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      orientation: 'vertical',
-      gestureOrientation: 'vertical',
-      smoothWheel: true,
-      wheelMultiplier: 1,
-      touchMultiplier: 2,
-      infinite: false,
-    });
-
-    function raf(time: number) {
-      lenis.raf(time);
-      requestAnimationFrame(raf);
-    }
-
-    requestAnimationFrame(raf);
-
-    // Enhanced cursor with trail effect
-    const handleMouseMove = (e: MouseEvent) => {
-      setCursorPos({ x: e.clientX, y: e.clientY });
-      
-      // Add trail point
-      setCursorTrail(prev => [
-        ...prev.slice(-8), // Keep last 8 points
-        { x: e.clientX, y: e.clientY, id: Date.now() }
-      ]);
-    };
-
-    // Check if hovering over interactive elements
-    const handleMouseEnter = () => setIsHovering(true);
-    const handleMouseLeave = () => setIsHovering(false);
-
-    const interactiveElements = document.querySelectorAll('a, button, [role="button"]');
-    interactiveElements.forEach(el => {
-      el.addEventListener('mouseenter', handleMouseEnter);
-      el.addEventListener('mouseleave', handleMouseLeave);
-    });
-
-    window.addEventListener('mousemove', handleMouseMove);
-
     return () => {
       clearInterval(loadingInterval);
-      lenis.destroy();
-      window.removeEventListener('mousemove', handleMouseMove);
-      interactiveElements.forEach(el => {
-        el.removeEventListener('mouseenter', handleMouseEnter);
-        el.removeEventListener('mouseleave', handleMouseLeave);
-      });
     };
   }, []);
 
@@ -207,10 +159,9 @@ export default function Home() {
       />
 
       {/* Story Timeline */}
-      <div className="fixed left-8 top-1/2 -translate-y-1/2 z-50">
+      <div className="fixed left-8 top-1/2 -translate-y-1/2 z-50 hidden lg:block">
         {/* Vertical Line */}
-        <div className="relative h-96 w-1 bg-gray-800/50 rounded-full overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-b from-violet-500/20 via-pink-400/20 to-purple-500/20 rounded-full blur-sm" />
+        <div className="relative h-96 w-1 bg-gray-800/50 rounded-full overflow-hidden mx-auto">\n          <div className="absolute inset-0 bg-gradient-to-b from-violet-500/20 via-pink-400/20 to-purple-500/20 rounded-full blur-sm" />
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-gray-600 to-transparent opacity-40 rounded-full" />
           
           {/* Animated Progress */}
@@ -341,95 +292,17 @@ export default function Home() {
         })}
       </div>
 
-      {/* Custom Branded Cursor */}
-      <div className="fixed pointer-events-none z-[9999] hidden md:block">
-        {/* Cursor Trail */}
-        {cursorTrail.map((point) => (
-          <motion.div
-            key={point.id}
-            className="absolute w-2 h-2 rounded-full bg-violet-400"
-            initial={{ x: point.x - 4, y: point.y - 4, opacity: 0.6, scale: 1 }}
-            animate={{ opacity: 0, scale: 0 }}
-            transition={{ duration: 0.6, ease: 'easeOut' }}
-          />
-        ))}
-        
-        {/* Main Cursor */}
-        <motion.div
-          className="absolute"
-          animate={{
-            x: cursorPos.x - 20,
-            y: cursorPos.y - 20,
-            scale: isHovering ? 1.3 : 1,
-          }}
-          transition={{ type: 'spring', stiffness: 1000, damping: 30, mass: 0.5 }}
-        >
-          {/* Outer Glow */}
-          <div className="absolute inset-0 bg-gradient-to-r from-violet-500 to-pink-400 rounded-full blur-xl opacity-40" />
-          
-          {/* Main Circle with Brand */}
-          <motion.div 
-            className="relative w-10 h-10 rounded-full bg-white/10 backdrop-blur-xl border-2 border-violet-400/50 flex items-center justify-center"
-            animate={{ rotate: isHovering ? 360 : 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            {/* Gradient Border Animation */}
-            <motion.div
-              className="absolute inset-0 rounded-full"
-              style={{
-                background: 'linear-gradient(45deg, #c084fc, #f472b6, #c084fc)',
-                backgroundSize: '200% 200%',
-              }}
-              animate={{
-                backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
-              }}
-              transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-            />
-            <div className="absolute inset-[2px] rounded-full bg-black/90 backdrop-blur-xl" />
-            
-            {/* WINX Text */}
-            <span className="relative text-[8px] font-bold bg-gradient-to-r from-violet-400 to-pink-300 bg-clip-text text-transparent">
-              WINX
-            </span>
-          </motion.div>
-          
-          {/* Orbiting Dots */}
-          {[0, 120, 240].map((angle, i) => (
-            <motion.div
-              key={i}
-              className="absolute w-1 h-1 bg-violet-400 rounded-full"
-              animate={{
-                rotate: 360,
-              }}
-              transition={{
-                duration: 3,
-                repeat: Infinity,
-                ease: 'linear',
-                delay: i * 0.3,
-              }}
-              style={{
-                left: '50%',
-                top: '50%',
-                marginLeft: '-2px',
-                marginTop: '-2px',
-                transformOrigin: `2px ${18 + (isHovering ? 8 : 0)}px`,
-              }}
-            />
-          ))}
-        </motion.div>
-      </div>
-
       {/* Floating Back to Top Button */}
       <motion.button
         initial={{ opacity: 0, scale: 0 }}
-        animate={{ 
-          opacity: scrollYProgress.get() > 0.1 ? 1 : 0,
-          scale: scrollYProgress.get() > 0.1 ? 1 : 0,
+        style={{ 
+          opacity: buttonOpacity,
+          scale: buttonScale
         }}
         whileHover={{ scale: 1.1, rotate: 360 }}
         whileTap={{ scale: 0.9 }}
-        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-        className="fixed bottom-8 right-8 z-[90] p-4 bg-gradient-to-r from-violet-500 to-pink-400 rounded-full shadow-2xl shadow-violet-500/50"
+        onClick={() => window.scrollTo({ top: 0, behavior: 'auto' })}
+        className="fixed bottom-8 right-8 z-[90] p-4 bg-gradient-to-r from-violet-500 to-pink-400 rounded-full shadow-2xl shadow-violet-500/50 cursor-pointer"
       >
         <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
@@ -440,6 +313,7 @@ export default function Home() {
       <HeroSection />
       <StatsSection />
       <ServicesSection />
+      <SocialMediaSection />
       <WorkSection />
       <TeamSection />
       <TestimonialsSection />
@@ -451,6 +325,7 @@ export default function Home() {
 
 function Navigation() {
   const [scrolled, setScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
@@ -474,9 +349,11 @@ function Navigation() {
           <img
             src="https://winxmarketingmedia.in/wp-content/uploads/2025/06/cropped-COLLABORATIVE-SENIOR-CARE-2.png"
             alt="WinX Logo"
-            className="h-12 w-auto"
+            className="h-10 md:h-12 w-auto"
           />
         </motion.div>
+        
+        {/* Desktop Menu */}
         <div className="hidden md:flex gap-8">
           {['About', 'Services', 'Team', 'Work', 'Contact'].map((item) => (
             <motion.a
@@ -489,14 +366,60 @@ function Navigation() {
             </motion.a>
           ))}
         </div>
+        
+        {/* Desktop Button */}
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="bg-gradient-to-r from-violet-500 to-pink-400 px-6 py-2 rounded-full text-sm font-medium"
+          className="hidden md:block bg-gradient-to-r from-violet-500 to-pink-400 px-6 py-2 rounded-full text-sm font-medium"
         >
           Get Started
         </motion.button>
+        
+        {/* Mobile Hamburger */}
+        <motion.button
+          whileTap={{ scale: 0.9 }}
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="md:hidden p-2 text-white"
+        >
+          {mobileMenuOpen ? (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          ) : (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          )}
+        </motion.button>
       </div>
+      
+      {/* Mobile Menu */}
+      <motion.div
+        initial={{ opacity: 0, height: 0 }}
+        animate={{ 
+          opacity: mobileMenuOpen ? 1 : 0,
+          height: mobileMenuOpen ? 'auto' : 0
+        }}
+        transition={{ duration: 0.3 }}
+        className="md:hidden overflow-hidden bg-black/30 backdrop-blur-xl mx-4"
+      >
+        <div className="px-6 py-4 flex flex-col gap-4">
+          {['About', 'Services', 'Team', 'Work', 'Contact'].map((item) => (
+            <a
+              key={item}
+              href={`#${item.toLowerCase()}`}
+              onClick={() => setMobileMenuOpen(false)}
+              className="text-white font-medium py-2 hover:text-violet-400 transition-colors"
+            >
+              {item}
+            </a>
+          ))}
+          <button className="bg-gradient-to-r from-violet-500 to-pink-400 px-6 py-3 rounded-full text-sm font-medium w-full">
+            Get Started
+          </button>
+        </div>
+      </motion.div>
     </motion.nav>
   );
 }
@@ -574,7 +497,7 @@ function HeroSection() {
 
       <motion.div 
         style={{ opacity, y }} 
-        className="relative z-10 max-w-6xl mx-auto px-6 text-center"
+        className="relative z-10 max-w-6xl mx-auto px-4 md:px-6 text-center pt-20 md:pt-0"
       >
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -599,7 +522,7 @@ function HeroSection() {
           </motion.div>
 
           <motion.h1
-            className="text-5xl md:text-7xl font-bold mb-6 leading-tight"
+            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight"
             initial={{ opacity: 0, scale: 0.5 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.2 }}
@@ -644,7 +567,7 @@ function HeroSection() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 0.4 }}
-          className="text-lg md:text-xl text-gray-300 mb-10 max-w-3xl mx-auto leading-relaxed"
+          className="text-base sm:text-lg md:text-xl text-gray-300 mb-10 max-w-3xl mx-auto leading-relaxed px-4"
         >
           It&apos;s <motion.span 
             animate={{ color: ['#f9a8d4', '#c084fc', '#f9a8d4'] }}
@@ -1075,6 +998,153 @@ function ServicesSection() {
   );
 }
 
+function SocialMediaSection() {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: false, amount: 0.3 });
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start end", "end start"]
+  });
+
+  const socialProfiles = [
+    { name: "It's Forever", handle: "@itsforever.in", link: "https://www.instagram.com/itsforever.in", color: "from-pink-400 to-rose-400" },
+    { name: "Ceramic Pro Bangalore", handle: "@ceramicprobangalore", link: "https://www.instagram.com/ceramicprobangalore_official", color: "from-violet-400 to-purple-400" },
+    { name: "Classy Captures", handle: "@classycaptures", link: "https://www.instagram.com/classycaptures_official", color: "from-cyan-400 to-blue-400" },
+    { name: "SSSS Catering", handle: "@sssscatering", link: "https://www.instagram.com/sssscatering/", color: "from-orange-400 to-red-400" },
+    { name: "Kahani by Charm", handle: "@kahaniby_charm", link: "https://www.instagram.com/kahaniby_charm_events", color: "from-green-400 to-emerald-400" },
+    { name: "Ambari Weddings", handle: "@ambari_weddings", link: "https://www.instagram.com/ambari_weddings", color: "from-purple-400 to-pink-400" },
+    { name: "HSR Tiles", handle: "@hsrtiles_blr", link: "https://www.instagram.com/hsrtiles_blr", color: "from-yellow-400 to-orange-400" },
+    { name: "House of Bliss", handle: "@houseofbliss.in", link: "https://www.instagram.com/houseofbliss.in/", color: "from-indigo-400 to-violet-400" },
+  ];
+
+  // Generate random positions for each box based on scroll
+  const generateRandomPosition = (index: number, progress: number) => {
+    const seed = index * 123.456; // Unique seed for each box
+    const maxMove = 300; // Maximum pixels to move
+    
+    const x = Math.sin(seed) * maxMove * progress;
+    const y = Math.cos(seed * 1.5) * maxMove * progress;
+    const rotation = Math.sin(seed * 2) * 20 * progress;
+    
+    return { x, y, rotation };
+  };
+
+  return (
+    <section id="social-media" ref={ref} className="py-32 relative overflow-hidden">
+      {/* Background gradient */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black via-purple-900/10 to-black" />
+      
+      <div className="max-w-7xl mx-auto px-6 relative z-10">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.8 }}
+          className="text-center mb-20"
+        >
+          <motion.h2 
+            className="text-5xl md:text-6xl font-bold mb-6"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={isInView ? { opacity: 1, scale: 1 } : {}}
+            transition={{ duration: 0.6 }}
+          >
+            <span className="bg-gradient-to-r from-violet-400 via-pink-400 to-purple-400 bg-clip-text text-transparent">
+              Social Media Looks
+            </span>
+          </motion.h2>
+          <p className="text-xl text-gray-400 max-w-2xl mx-auto">
+            Our creative Instagram transformations that turn brands into visual stories
+          </p>
+        </motion.div>
+
+        {/* Social Media Boxes - Dispersing Effect */}
+        <div className="relative min-h-[600px] flex items-center justify-center">
+          {socialProfiles.map((profile, index) => {
+            const scrollProgress = Math.max(0, Math.min(1, (scrollYProgress.get() - 0.2) / 0.6));
+            const position = generateRandomPosition(index, scrollProgress);
+            
+            return (
+              <motion.div
+                key={profile.handle}
+                className="absolute"
+                initial={{ opacity: 0, scale: 0 }}
+                animate={isInView ? { 
+                  opacity: 1, 
+                  scale: 1,
+                  x: position.x,
+                  y: position.y,
+                  rotate: position.rotation
+                } : {}}
+                transition={{ 
+                  duration: 0.8, 
+                  delay: index * 0.1,
+                  x: { duration: 1.2, ease: "easeOut" },
+                  y: { duration: 1.2, ease: "easeOut" },
+                  rotate: { duration: 1.2, ease: "easeOut" }
+                }}
+                whileHover={{ scale: 1.1, zIndex: 50 }}
+              >
+                <a
+                  href={profile.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block group"
+                >
+                  <div className={`relative p-6 bg-gradient-to-br ${profile.color} rounded-2xl shadow-2xl backdrop-blur-xl border border-white/20 w-64 h-40`}>
+                    {/* Instagram icon */}
+                    <div className="absolute top-4 right-4">
+                      <Instagram className="w-6 h-6 text-white/80 group-hover:text-white transition-colors" />
+                    </div>
+                    
+                    {/* Content */}
+                    <div className="relative z-10">
+                      <h3 className="text-xl font-bold text-white mb-2 line-clamp-2">
+                        {profile.name}
+                      </h3>
+                      <p className="text-white/80 text-sm font-medium">
+                        {profile.handle}
+                      </p>
+                      
+                      {/* View Profile indicator */}
+                      <div className="mt-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span className="text-xs text-white font-semibold">
+                          View Profile →
+                        </span>
+                      </div>
+                    </div>
+                    
+                    {/* Hover glow effect */}
+                    <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 rounded-2xl transition-all duration-300" />
+                  </div>
+                </a>
+              </motion.div>
+            );
+          })}
+        </div>
+
+        {/* Call to Action */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.8, delay: 0.8 }}
+          className="text-center mt-20"
+        >
+          <motion.a
+            href="https://winxmarketingmedia.in/social-media/"
+            target="_blank"
+            rel="noopener noreferrer"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="inline-block px-8 py-4 rounded-full text-lg font-semibold bg-gradient-to-r from-violet-500/20 to-pink-400/20 border-2 border-violet-400/50 text-white hover:bg-gradient-to-r hover:from-violet-500 hover:to-pink-400 hover:border-transparent transition-all duration-300"
+          >
+            View All Social Media Work
+          </motion.a>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
 function WorkSection() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, amount: 0.2 });
@@ -1318,11 +1388,8 @@ function WorkSection() {
                 transition={{ duration: 0.3 }}
                 className="relative h-full"
               >
-                {/* Animated glow */}
-                <div className={`absolute -inset-0.5 bg-gradient-to-r ${work.gradient} opacity-0 group-hover:opacity-60 blur-xl transition-opacity duration-500 rounded-3xl`} />
-                
                 {/* Card */}
-                <div className="relative bg-gradient-to-br from-gray-900/90 to-black/90 backdrop-blur-xl rounded-3xl border border-gray-800 group-hover:border-violet-400/50 transition-all duration-300 overflow-hidden h-full flex flex-col">
+                <div className="relative bg-gradient-to-br from-gray-900/90 to-black/90 backdrop-blur-xl rounded-3xl border border-gray-800 transition-all duration-300 overflow-hidden h-full flex flex-col">
                   {/* Image */}
                   <div className="relative h-56 overflow-hidden">
                     <motion.img
@@ -1332,12 +1399,11 @@ function WorkSection() {
                       whileHover={{ scale: 1.1 }}
                       transition={{ duration: 0.6 }}
                     />
-                    <div className={`absolute inset-0 bg-gradient-to-t ${work.gradient} opacity-0 group-hover:opacity-30 transition-opacity duration-500`} />
                   </div>
 
                   {/* Content */}
                   <div className="p-6 flex flex-col flex-grow">
-                    <h3 className={`text-2xl font-bold mb-2 transition-all duration-300 bg-gradient-to-r ${work.gradient} bg-clip-text group-hover:text-transparent`}>
+                    <h3 className="text-2xl font-bold mb-2 text-white">
                       {work.title}
                     </h3>
                     
@@ -1356,21 +1422,19 @@ function WorkSection() {
                         target="_blank"
                         rel="noopener noreferrer"
                         whileHover={{ scale: 1.05 }}
-                        className={`flex-1 py-2 px-4 rounded-xl bg-gradient-to-r ${work.gradient} text-white font-semibold text-center text-sm`}
+                        className={`flex-1 py-2 px-4 rounded-xl bg-gradient-to-r ${work.gradient} opacity-80 hover:opacity-100 text-white font-semibold text-center text-sm transition-opacity`}
                       >
                         View Site
                       </motion.a>
-                      {work.instagram && (
-                        <motion.a
-                          href={work.instagram}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          whileHover={{ scale: 1.05 }}
-                          className="py-2 px-4 rounded-xl border border-violet-400/50 text-violet-400 font-semibold text-center text-sm hover:bg-violet-400/10 transition-colors"
-                        >
-                          <Instagram className="w-5 h-5" />
-                        </motion.a>
-                      )}
+                      <motion.a
+                        href={work.instagram}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        whileHover={{ scale: 1.05 }}
+                        className="py-2 px-4 rounded-xl border border-violet-400/50 text-violet-400 font-semibold text-center text-sm hover:bg-violet-400/10 transition-colors"
+                      >
+                        <Instagram className="w-5 h-5" />
+                      </motion.a>
                     </div>
                   </div>
 
@@ -1445,6 +1509,20 @@ function TeamSection() {
       description: 'Strategic mind behind transformative marketing solutions.',
       image: 'https://winxmarketingmedia.in/wp-content/uploads/2025/06/2-1.png',
       gradient: 'from-pink-300 to-rose-300',
+    },
+    {
+      name: 'Dharam T',
+      role: 'Strategic Partner',
+      description: 'Driving strategic growth and innovative partnerships.',
+      image: 'https://winxmarketingmedia.in/wp-content/uploads/2025/10/2.png',
+      gradient: 'from-cyan-400 to-blue-400',
+    },
+    {
+      name: 'V Preetham Raju',
+      role: 'Strategic Partner',
+      description: 'Empowering brands with strategic insights and market expertise.',
+      image: 'https://winxmarketingmedia.in/wp-content/uploads/2025/10/1.png',
+      gradient: 'from-purple-400 to-pink-400',
     },
   ];
 
@@ -2107,8 +2185,228 @@ function Footer() {
           </div>
         </div>
 
-        {/* Divider */}
-        <div className="border-t border-gray-800/50 mb-8" />
+        {/* Lightning Bolt Divider with Electric Arcs */}
+        <div className="relative py-16 mb-8">
+          {/* Energy nodes that generate lightning */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            {[...Array(8)].map((_, i) => {
+              const side = i % 2 === 0 ? -1 : 1;
+              const xPos = (i / 8) * 100;
+              const yPos = side * (60 + Math.random() * 40);
+              
+              return (
+                <motion.div
+                  key={`node-${i}`}
+                  className="absolute"
+                  style={{
+                    left: `${xPos}%`,
+                    top: '50%',
+                  }}
+                  animate={{
+                    y: [yPos, yPos + side * 15, yPos],
+                  }}
+                  transition={{
+                    duration: 2 + Math.random() * 1,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                    delay: i * 0.3,
+                  }}
+                >
+                  {/* Energy node */}
+                  <motion.div
+                    className="w-3 h-3 rounded-full"
+                    style={{
+                      background: i % 3 === 0 ? 
+                        'radial-gradient(circle, rgba(139, 92, 246, 1), rgba(139, 92, 246, 0.3))' :
+                        i % 3 === 1 ?
+                        'radial-gradient(circle, rgba(236, 72, 153, 1), rgba(236, 72, 153, 0.3))' :
+                        'radial-gradient(circle, rgba(59, 130, 246, 1), rgba(59, 130, 246, 0.3))',
+                      boxShadow: i % 3 === 0 ? 
+                        '0 0 20px rgba(139, 92, 246, 0.8), 0 0 40px rgba(139, 92, 246, 0.4)' :
+                        i % 3 === 1 ?
+                        '0 0 20px rgba(236, 72, 153, 0.8), 0 0 40px rgba(236, 72, 153, 0.4)' :
+                        '0 0 20px rgba(59, 130, 246, 0.8), 0 0 40px rgba(59, 130, 246, 0.4)',
+                    }}
+                    animate={{
+                      scale: [1, 1.5, 1],
+                      opacity: [0.6, 1, 0.6],
+                    }}
+                    transition={{
+                      duration: 1.5,
+                      repeat: Infinity,
+                      delay: i * 0.2,
+                    }}
+                  />
+                </motion.div>
+              );
+            })}
+          </div>
+
+          {/* Lightning bolts - SVG paths from nodes to divider */}
+          <svg 
+            className="absolute inset-0 w-full h-full pointer-events-none"
+            style={{ overflow: 'visible' }}
+          >
+            {[...Array(8)].map((_, i) => {
+              const side = i % 2 === 0 ? -1 : 1;
+              const startX = (i / 8) * 100;
+              const startY = 50 + side * (6 + Math.random() * 4);
+              const endY = 50;
+              
+              // Create jagged lightning path
+              const segments = 4 + Math.floor(Math.random() * 3);
+              let pathD = `M ${startX}% ${startY}%`;
+              
+              for (let s = 1; s <= segments; s++) {
+                const progress = s / segments;
+                const y = startY + (endY - startY) * progress;
+                const x = startX + (Math.random() - 0.5) * 3;
+                pathD += ` L ${x}% ${y}%`;
+              }
+              
+              return (
+                <motion.path
+                  key={`bolt-${i}`}
+                  d={pathD}
+                  stroke={
+                    i % 3 === 0 ? 'rgba(139, 92, 246, 0.8)' :
+                    i % 3 === 1 ? 'rgba(236, 72, 153, 0.8)' :
+                    'rgba(59, 130, 246, 0.8)'
+                  }
+                  strokeWidth="2"
+                  fill="none"
+                  strokeLinecap="round"
+                  initial={{ pathLength: 0, opacity: 0 }}
+                  animate={{
+                    pathLength: [0, 1, 1, 0],
+                    opacity: [0, 1, 0.8, 0],
+                  }}
+                  transition={{
+                    duration: 1.5,
+                    repeat: Infinity,
+                    delay: i * 0.4,
+                    ease: "easeInOut",
+                  }}
+                  style={{
+                    filter: i % 3 === 0 ? 
+                      'drop-shadow(0 0 4px rgba(139, 92, 246, 0.8))' :
+                      i % 3 === 1 ?
+                      'drop-shadow(0 0 4px rgba(236, 72, 153, 0.8))' :
+                      'drop-shadow(0 0 4px rgba(59, 130, 246, 0.8))',
+                  }}
+                />
+              );
+            })}
+            
+            {/* Secondary thinner arcs for more dramatic effect */}
+            {[...Array(6)].map((_, i) => {
+              const startX = 15 + (i / 6) * 70;
+              const startY = i % 2 === 0 ? 30 : 70;
+              
+              return (
+                <motion.path
+                  key={`arc-${i}`}
+                  d={`M ${startX}% ${startY}% Q ${startX + (Math.random() - 0.5) * 5}% 50% ${startX + 2}% 50%`}
+                  stroke="rgba(139, 92, 246, 0.4)"
+                  strokeWidth="1"
+                  fill="none"
+                  initial={{ pathLength: 0, opacity: 0 }}
+                  animate={{
+                    pathLength: [0, 1, 0],
+                    opacity: [0, 0.6, 0],
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    delay: 0.8 + i * 0.3,
+                  }}
+                  style={{
+                    filter: 'drop-shadow(0 0 2px rgba(139, 92, 246, 0.6))',
+                  }}
+                />
+              );
+            })}
+          </svg>
+
+          {/* The electrified divider line */}
+          <motion.div className="relative">
+            <motion.div 
+              className="h-0.5 bg-gradient-to-r from-transparent via-violet-500 to-transparent relative"
+              animate={{
+                boxShadow: [
+                  '0 0 10px rgba(139, 92, 246, 0.5), 0 0 20px rgba(139, 92, 246, 0.3)',
+                  '0 0 20px rgba(139, 92, 246, 0.8), 0 0 40px rgba(139, 92, 246, 0.5), 0 0 60px rgba(236, 72, 153, 0.3)',
+                  '0 0 10px rgba(139, 92, 246, 0.5), 0 0 20px rgba(139, 92, 246, 0.3)',
+                ],
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+            >
+              {/* Electric charge points along the line */}
+              {[...Array(12)].map((_, i) => (
+                <motion.div
+                  key={`charge-${i}`}
+                  className="absolute top-1/2 -translate-y-1/2 w-1 h-1 rounded-full bg-white"
+                  style={{
+                    left: `${(i / 12) * 100}%`,
+                    boxShadow: '0 0 8px rgba(255, 255, 255, 0.8), 0 0 16px rgba(139, 92, 246, 0.6)',
+                  }}
+                  animate={{
+                    scale: [0, 1.5, 0],
+                    opacity: [0, 1, 0],
+                  }}
+                  transition={{
+                    duration: 1.5,
+                    repeat: Infinity,
+                    delay: i * 0.125,
+                  }}
+                />
+              ))}
+            </motion.div>
+            
+            {/* Electromagnetic field effect */}
+            <motion.div 
+              className="absolute inset-0 -top-12 -bottom-12"
+              style={{
+                background: 'radial-gradient(ellipse 100% 50% at 50% 50%, rgba(139, 92, 246, 0.1), transparent 70%)',
+              }}
+              animate={{
+                opacity: [0.3, 0.6, 0.3],
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+              }}
+            />
+          </motion.div>
+
+          {/* Floating sparks */}
+          {[...Array(15)].map((_, i) => (
+            <motion.div
+              key={`spark-${i}`}
+              className="absolute w-0.5 h-0.5 rounded-full bg-white"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: '50%',
+                boxShadow: '0 0 4px rgba(255, 255, 255, 0.8)',
+              }}
+              animate={{
+                y: [0, (Math.random() - 0.5) * 60],
+                x: [(Math.random() - 0.5) * 40, (Math.random() - 0.5) * 40],
+                opacity: [0, 1, 0],
+                scale: [0, 1, 0],
+              }}
+              transition={{
+                duration: 1.5 + Math.random() * 1,
+                repeat: Infinity,
+                delay: Math.random() * 2,
+              }}
+            />
+          ))}
+        </div>
 
         {/* Bottom section */}
         <div className="flex flex-col md:flex-row justify-between items-center gap-6">
