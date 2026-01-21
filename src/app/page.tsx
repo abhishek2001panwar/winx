@@ -32,17 +32,17 @@ export default function Home() {
   const contactRef = useRef(null);
 
   useEffect(() => {
-    // Loading animation - slowed down
+    // Loading animation
     const loadingInterval = setInterval(() => {
       setLoadingProgress(prev => {
         if (prev >= 100) {
           clearInterval(loadingInterval);
-          setTimeout(() => setLoading(false), 800);
+          setTimeout(() => setLoading(false), 400);
           return 100;
         }
-        return prev + Math.random() * 5; // Reduced from 15 to 5 for slower loading
+        return prev + Math.random() * 12;
       });
-    }, 150); // Increased from 100 to 150ms
+    }, 80);
 
     return () => {
       clearInterval(loadingInterval);
